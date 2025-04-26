@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--mount",
+        "type=bind,src=/Users/thomasnguyen/Desktop,dst=/projects/Desktop",
+        "--mount",
+        "type=bind,src=/Users/thomasnguyen/code,dst=/projects/code,ro",
+        "--mount",
+        "type=bind,src=/Users/thomasnguyen/Downloads,dst=/projects/Downloads,ro",
+        "mcp/filesystem",
+        "/projects"
+      ]
+    }
+  }
+}
