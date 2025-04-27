@@ -7,12 +7,25 @@ import (
 	"fmt"
 	"os"
 
+	"agent/pkg/mcp"
 	"agent/pkg/tool"
 
 	"github.com/anthropics/anthropic-sdk-go"
 )
 
 func main() {
+	// Instantiate the MCP Server Manager
+	mcpManager, err := mcp.NewManager()
+	if err != nil {
+		fmt.Printf("Error initializing MCP Manager: %s\n", err)
+		return
+	}
+	err = mcpManager.StartAll()
+	if err != nil {
+		fmt.Printf("Error starting MCP servers: %s\n", err)
+		return
+	}
+
 	client := anthropic.NewClient()
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -25,7 +38,7 @@ func main() {
 
 	tools := []tool.ToolDefinition{tool.ReadFileDefinition, tool.ListFilesDefinition, tool.EditFileDefinition}
 	agent := NewAgent(&client, getUserMessage, tools)
-	err := agent.Run(context.TODO())
+	err = agent.Run(context.TODO())
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 	}

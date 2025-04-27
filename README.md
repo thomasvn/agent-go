@@ -17,18 +17,19 @@ go run main.go
 
 <!--
 TODO:
+- Running and managing MCP Servers
+  - Listing Tools, Registering Tools
 - Try integrating mcp servers with the agent?
   - Our agent has to be able to independently run x number of servers?
     - https://github.com/modelcontextprotocol/servers
   - https://github.com/mark3labs/mcp-go
   - https://github.com/metoro-io/mcp-golang
   - https://github.com/llmcontext/gomcp
-- Build a server to run and host MCP servers? Immediately get context?
 - Try integrating with local Ollama models? Do local Ollama models implement the Anthropic API?
-- Play with mcp in cursor? Podman + MCP?
 -->
 
 <!--
 DONE:
 - Finish tutorial
+- Cursor + MCP
 -->

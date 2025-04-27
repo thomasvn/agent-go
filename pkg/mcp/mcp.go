@@ -35,8 +35,13 @@ func (s *Server) Start() error {
 	}
 
 	s.cmd = exec.Command(s.config.Command, s.config.Args...)
-	s.cmd.Stdout = os.Stdout
-	s.cmd.Stderr = os.Stderr
+
+	logFile, err := os.OpenFile(s.Name+".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open log file: %w", err)
+	}
+	s.cmd.Stdout = logFile
+	s.cmd.Stderr = logFile
 
 	if err := s.cmd.Start(); err != nil {
 		s.cmd = nil
@@ -70,7 +75,16 @@ type Manager struct {
 func NewManager() (*Manager, error) {
 	data, err := os.ReadFile(configPath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Println("[MCP] Config file not found: starting with no servers configured.")
+			return &Manager{servers: make(map[string]*Server)}, nil
+		}
 		return nil, fmt.Errorf("reading config: %w", err)
+	}
+
+	if len(data) == 0 {
+		fmt.Println("[MCP] Config file is empty: starting with no servers configured.")
+		return &Manager{servers: make(map[string]*Server)}, nil
 	}
 
 	var config Config
