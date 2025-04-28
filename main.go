@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 
@@ -14,8 +15,10 @@ import (
 )
 
 func main() {
-	// Instantiate the MCP Server Manager
-	mcpManager, err := mcp.NewManager()
+	configPath := flag.String("config", "myconfig.json", "path to MCP config file")
+	flag.Parse()
+
+	mcpManager, err := mcp.NewManager(*configPath)
 	if err != nil {
 		fmt.Printf("Error initializing MCP Manager: %s\n", err)
 		return

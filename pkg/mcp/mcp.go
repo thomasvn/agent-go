@@ -2,26 +2,12 @@ package mcp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"os"
 	"sync"
 
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
 )
-
-const configPath = "myconfig.json"
-
-type ServerConfig struct {
-	Command string            `json:"command"`
-	Args    []string          `json:"args"`
-	Env     map[string]string `json:"env"`
-}
-
-type Config struct {
-	MCPServers map[string]ServerConfig `json:"mcpServers"`
-}
 
 type Server struct {
 	Name   string
@@ -48,14 +34,11 @@ func (s *Server) Start() error {
 		return fmt.Errorf("failed to create client: %w", err)
 	}
 
-	fmt.Println("Starting MCP Server with command:", s.config.Command, s.config.Args)
-
 	initRequest := mcp.InitializeRequest{}
 	initRequest.Params.ProtocolVersion = mcp.LATEST_PROTOCOL_VERSION
 	initRequest.Params.ClientInfo = mcp.Implementation{Name: "agent-go", Version: "0.0.1"}
 	_, err = s.client.Initialize(context.Background(), initRequest)
 	if err != nil {
-		fmt.Printf("Failed to initialize: %v\n", err)
 		return fmt.Errorf("failed to initialize: %w", err)
 	}
 
@@ -69,7 +52,7 @@ func (s *Server) Start() error {
 	for _, tool := range s.tools {
 		toolNames = append(toolNames, tool.Name)
 	}
-	fmt.Printf("Initialized %s with tools: %v ...\n", s.Name, toolNames)
+	fmt.Printf("Initialized MCP Server '%s' with tools: %v ...\n", s.Name, toolNames)
 
 	return nil
 }
@@ -95,23 +78,9 @@ type Manager struct {
 	mu      sync.RWMutex
 }
 
-func NewManager() (*Manager, error) {
-	data, err := os.ReadFile(configPath)
+func NewManager(configPath string) (*Manager, error) {
+	config, err := LoadConfig(configPath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			fmt.Println("[MCP] Config file not found: starting with no servers configured.")
-			return &Manager{servers: make(map[string]*Server)}, nil
-		}
-		return nil, fmt.Errorf("reading config: %w", err)
-	}
-
-	if len(data) == 0 {
-		fmt.Println("[MCP] Config file is empty: starting with no servers configured.")
-		return &Manager{servers: make(map[string]*Server)}, nil
-	}
-
-	var config Config
-	if err := json.Unmarshal(data, &config); err != nil {
 		return nil, fmt.Errorf("parsing config: %w", err)
 	}
 
@@ -135,7 +104,6 @@ func (m *Manager) StartAll() error {
 
 	for name, server := range m.servers {
 		if err := server.Start(); err != nil {
-			fmt.Printf("Failed to start %s: %v\n", name, err)
 			return fmt.Errorf("starting %s: %w", name, err)
 		}
 	}

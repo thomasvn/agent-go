@@ -18,7 +18,7 @@ go run main.go
 <!--
 TODO:
 - Running and managing MCP Servers
-  - Listing Tools, Registering Tools
+  - Listing Tools, Registering Tools, Running tools
 - Try integrating mcp servers with the agent?
   - Our agent has to be able to independently run x number of servers?
     - https://github.com/modelcontextprotocol/servers
