@@ -2,3 +2,4 @@
 .cursor/mcp.json
 *.log
 myconfig.json
+launch.json

@@ -1,18 +1,22 @@
 package mcp
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"sync"
+
+	"github.com/mark3labs/mcp-go/client"
+	"github.com/mark3labs/mcp-go/mcp"
 )
 
-const configPath = "config.json"
+const configPath = "myconfig.json"
 
 type ServerConfig struct {
-	Command string   `json:"command"`
-	Args    []string `json:"args"`
+	Command string            `json:"command"`
+	Args    []string          `json:"args"`
+	Env     map[string]string `json:"env"`
 }
 
 type Config struct {
@@ -21,32 +25,51 @@ type Config struct {
 
 type Server struct {
 	Name   string
-	cmd    *exec.Cmd
 	config ServerConfig
-	mu     sync.Mutex
+
+	client *client.Client
+	tools  []mcp.Tool
+
+	mu sync.Mutex
 }
 
 func (s *Server) Start() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.cmd != nil {
-		return fmt.Errorf("already running")
+	var err error
+	var env []string
+	for k, v := range s.config.Env {
+		env = append(env, fmt.Sprintf("%s=%s", k, v))
 	}
 
-	s.cmd = exec.Command(s.config.Command, s.config.Args...)
-
-	logFile, err := os.OpenFile(s.Name+".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	s.client, err = client.NewStdioMCPClient(s.config.Command, env, s.config.Args...)
 	if err != nil {
-		return fmt.Errorf("failed to open log file: %w", err)
+		return fmt.Errorf("failed to create client: %w", err)
 	}
-	s.cmd.Stdout = logFile
-	s.cmd.Stderr = logFile
 
-	if err := s.cmd.Start(); err != nil {
-		s.cmd = nil
-		return fmt.Errorf("failed to start: %w", err)
+	fmt.Println("Starting MCP Server with command:", s.config.Command, s.config.Args)
+
+	initRequest := mcp.InitializeRequest{}
+	initRequest.Params.ProtocolVersion = mcp.LATEST_PROTOCOL_VERSION
+	initRequest.Params.ClientInfo = mcp.Implementation{Name: "agent-go", Version: "0.0.1"}
+	_, err = s.client.Initialize(context.Background(), initRequest)
+	if err != nil {
+		fmt.Printf("Failed to initialize: %v\n", err)
+		return fmt.Errorf("failed to initialize: %w", err)
 	}
+
+	tools, err := s.client.ListTools(context.Background(), mcp.ListToolsRequest{})
+	if err != nil {
+		return fmt.Errorf("failed to list tools: %w", err)
+	}
+	s.tools = tools.Tools
+
+	toolNames := make([]string, 0, len(s.tools))
+	for _, tool := range s.tools {
+		toolNames = append(toolNames, tool.Name)
+	}
+	fmt.Printf("Initialized %s with tools: %v ...\n", s.Name, toolNames)
 
 	return nil
 }
@@ -55,15 +78,15 @@ func (s *Server) Stop() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.cmd == nil {
+	if s.client == nil {
 		return nil
 	}
 
-	if err := s.cmd.Process.Kill(); err != nil {
+	if err := s.client.Close(); err != nil {
 		return fmt.Errorf("failed to stop: %w", err)
 	}
 
-	s.cmd = nil
+	s.client = nil
 	return nil
 }
 
@@ -112,6 +135,7 @@ func (m *Manager) StartAll() error {
 
 	for name, server := range m.servers {
 		if err := server.Start(); err != nil {
+			fmt.Printf("Failed to start %s: %v\n", name, err)
 			return fmt.Errorf("starting %s: %w", name, err)
 		}
 	}
