@@ -7,7 +7,7 @@ import (
 )
 
 var ListFilesDefinition = ToolDefinition{
-	Name:        "list_files",
+	Name:        "local_list_files",
 	Description: "List files and directories at a given path. If no path is provided, lists files in the current directory.",
 	InputSchema: GenerateSchema[ListFilesInput](),
 	Function:    ListFiles,

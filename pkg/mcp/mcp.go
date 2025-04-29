@@ -2,7 +2,9 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/mark3labs/mcp-go/client"
@@ -120,4 +122,64 @@ func (m *Manager) StopAll() error {
 		}
 	}
 	return nil
+}
+
+func (m *Manager) Tools() []mcp.Tool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	var tools []mcp.Tool
+	for _, server := range m.servers {
+		tools = append(tools, server.tools...)
+	}
+	return tools
+}
+
+func (m *Manager) InvokeTool(name string, input json.RawMessage) (string, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	var tool *mcp.Tool
+	var server *Server
+	for _, s := range m.servers {
+		for _, t := range s.tools {
+			if t.Name == name {
+				tool = &t
+				server = s
+				break
+			}
+		}
+		if tool != nil {
+			break
+		}
+	}
+	if tool == nil {
+		return "", fmt.Errorf("tool not found: %s", name)
+	}
+
+	var args map[string]interface{}
+	if err := json.Unmarshal(input, &args); err != nil {
+		return "", fmt.Errorf("parse tool arguments: %w", err)
+	}
+
+	req := mcp.CallToolRequest{}
+	req.Params.Name = tool.Name
+	req.Params.Arguments = args
+
+	resp, err := server.client.CallTool(context.Background(), req)
+	if err != nil {
+		return "", fmt.Errorf("invoke tool: %w", err)
+	}
+
+	var texts []string
+	for _, content := range resp.Content {
+		if textContent, ok := content.(*mcp.TextContent); ok {
+			texts = append(texts, textContent.Text)
+		}
+	}
+	if len(texts) == 0 {
+		return "", fmt.Errorf("no text content in tool response")
+	}
+
+	return strings.Join(texts, "\n"), nil
 }

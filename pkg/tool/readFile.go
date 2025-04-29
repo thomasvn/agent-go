@@ -6,7 +6,7 @@ import (
 )
 
 var ReadFileDefinition = ToolDefinition{
-	Name:        "read_file",
+	Name:        "local_read_file",
 	Description: "Read the contents of a given relative file path. Use this when you want to see what's inside a file. Do not use this with directory names.",
 	InputSchema: GenerateSchema[ReadFileInput](),
 	Function:    ReadFile,

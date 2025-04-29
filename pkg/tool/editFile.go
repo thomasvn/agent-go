@@ -9,7 +9,7 @@ import (
 )
 
 var EditFileDefinition = ToolDefinition{
-	Name: "edit_file",
+	Name: "local_edit_file",
 	Description: `Make edits to a text file.
 
 Replaces 'old_str' with 'new_str' in the given file. 'old_str' and 'new_str' MUST be different from each other.
