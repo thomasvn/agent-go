@@ -170,10 +170,13 @@ func (m *Manager) InvokeTool(name string, input json.RawMessage) (string, error)
 	if err != nil {
 		return "", fmt.Errorf("invoke tool: %w", err)
 	}
+	if resp.IsError {
+		return "", fmt.Errorf("tool error: %s", resp.Content[0].(*mcp.TextContent).Text)
+	}
 
 	var texts []string
 	for _, content := range resp.Content {
-		if textContent, ok := content.(*mcp.TextContent); ok {
+		if textContent, ok := content.(mcp.TextContent); ok {
 			texts = append(texts, textContent.Text)
 		}
 	}

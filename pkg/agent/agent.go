@@ -142,6 +142,7 @@ func (a *Agent) executeTool(id, name string, input json.RawMessage) anthropic.Co
 	fmt.Printf("\u001b[92mtool\u001b[0m: %s(%s)\n", name, input)
 	response, err := toolDef.Function(input)
 	if err != nil {
+		fmt.Printf("\u001b[91mtool error\u001b[0m: %s\n", err.Error())
 		return anthropic.NewToolResultBlock(id, err.Error(), true)
 	}
 	return anthropic.NewToolResultBlock(id, response, false)
@@ -151,6 +152,7 @@ func (a *Agent) executeMCPTool(id, name string, input json.RawMessage) anthropic
 	fmt.Printf("\u001b[92mtool\u001b[0m: %s(%s)\n", name, input)
 	response, err := a.mcpManager.InvokeTool(name, input)
 	if err != nil {
+		fmt.Printf("\u001b[91mtool error\u001b[0m: %s\n", err.Error())
 		return anthropic.NewToolResultBlock(id, err.Error(), true)
 	}
 	return anthropic.NewToolResultBlock(id, response, false)
