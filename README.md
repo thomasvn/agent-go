@@ -1,7 +1,5 @@
 # agent-go
 
-Hello there! Hello! Welcome to the agent-go project.
-
 A Go-based agent inspired by [How to Build an Agent](https://ampcode.com/how-to-build-an-agent). Integrates the Model Context Protocol (MCP) with autonomous agents.
 
 ## Demo
