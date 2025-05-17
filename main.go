@@ -30,7 +30,8 @@ func main() {
 	}
 
 	client := anthropic.NewClient()
-	tools := []tool.ToolDefinition{tool.ReadFileDefinition, tool.ListFilesDefinition, tool.EditFileDefinition}
+	// tools := []tool.ToolDefinition{tool.ReadFileDefinition, tool.ListFilesDefinition, tool.EditFileDefinition}
+	tools := []tool.ToolDefinition{}
 
 	agent := agent.NewAgent(&client, getUserMessage, tools, mcpManager)
 	err = agent.Run(context.TODO())

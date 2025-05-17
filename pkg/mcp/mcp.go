@@ -54,7 +54,7 @@ func (s *Server) Start() error {
 	for _, tool := range s.tools {
 		toolNames = append(toolNames, tool.Name)
 	}
-	fmt.Printf("Initialized MCP Server '%s' with tools: %v ...\n", s.Name, toolNames)
+	printTools(s.Name, toolNames)
 
 	return nil
 }
@@ -171,7 +171,7 @@ func (m *Manager) InvokeTool(name string, input json.RawMessage) (string, error)
 		return "", fmt.Errorf("invoke tool: %w", err)
 	}
 	if resp.IsError {
-		return "", fmt.Errorf("tool error: %s", resp.Content[0].(*mcp.TextContent).Text)
+		return "", fmt.Errorf("tool error: %s", resp.Content[0].(mcp.TextContent).Text)
 	}
 
 	var texts []string
@@ -185,4 +185,21 @@ func (m *Manager) InvokeTool(name string, input json.RawMessage) (string, error)
 	}
 
 	return strings.Join(texts, "\n"), nil
+}
+
+func printTools(serverName string, toolNames []string) {
+	fmt.Printf("Initialized MCP Server '%s' with tools:\n", serverName)
+	for i, tool := range toolNames {
+		if i%6 == 0 {
+			fmt.Print("  ")
+		}
+		fmt.Print(tool)
+		if i < len(toolNames)-1 {
+			fmt.Print(", ")
+		}
+		if (i+1)%6 == 0 && i < len(toolNames)-1 {
+			fmt.Println()
+		}
+	}
+	fmt.Println()
 }

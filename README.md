@@ -2,6 +2,10 @@
 
 A Go-based agent inspired by [How to Build an Agent](https://ampcode.com/how-to-build-an-agent). Integrates the Model Context Protocol (MCP) with autonomous agents.
 
+## Demo
+
+![Demo of agent-go](assets/demo-speedup.gif)
+
 ## Project Structure
 
 - `pkg/agent/` — Agent core logic and orchestration
@@ -33,13 +37,13 @@ LINKS:
 
 <!--
 TODO:
-- asciinema recording
 - Remove dependence on Anthropic API?
 - Try integrating with local Ollama models? Do local Ollama models implement the Anthropic API?
 -->
 
 <!--
 DONE:
+- asciinema recording
 - Running and managing MCP Servers. Listing Tools, Registering Tools, Running tools
 - Cursor + MCP
 - Finish tutorial

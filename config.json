@@ -7,7 +7,7 @@
         "-i",
         "--rm",
         "--mount",
-        "type=bind,src=/Users/thomasnguyen/code,dst=/projects/code,ro",
+        "type=bind,src=/Users/thomasnguyen/code,dst=/projects/code",
         "mcp/filesystem",
         "/projects"
       ]
