@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	configPath := flag.String("config", "myconfig.json", "path to MCP config file")
+	configPath := flag.String("config", "config.json", "path to MCP config file")
 	flag.Parse()
 
 	mcpManager, err := mcp.NewManager(*configPath)
@@ -30,8 +30,11 @@ func main() {
 	}
 
 	client := anthropic.NewClient()
-	// tools := []tool.ToolDefinition{tool.ReadFileDefinition, tool.ListFilesDefinition, tool.EditFileDefinition}
-	tools := []tool.ToolDefinition{}
+	tools := []tool.ToolDefinition{
+		// tool.ReadFileDefinition,
+		// tool.ListFilesDefinition,
+		// tool.EditFileDefinition,
+	}
 
 	agent := agent.NewAgent(&client, getUserMessage, tools, mcpManager)
 	err = agent.Run(context.TODO())

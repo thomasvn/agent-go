@@ -25,6 +25,29 @@
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "REDACTED"
       }
+    },
+    "git": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "--mount",
+        "type=bind,src=/Users/thomasnguyen/code,dst=/projects/code",
+        "mcp/git"
+      ]
+    },
+    "puppeteer": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--init",
+        "-e",
+        "DOCKER_CONTAINER=true",
+        "mcp/puppeteer"
+      ]
     }
   }
 }

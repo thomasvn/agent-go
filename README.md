@@ -37,7 +37,10 @@ LINKS:
 
 <!--
 TODO:
+- Try playing with more MCP servers
 - Remove dependence on Anthropic API?
+  - Primarily used for `client.Messages.New()`. Accepts an existing conversation and returns a response message.
+  - https://pkg.go.dev/github.com/ollama/ollama/api
 - Try integrating with local Ollama models? Do local Ollama models implement the Anthropic API?
 -->
 
