@@ -1,26 +1,25 @@
 package agent
 
 import (
+	"agent/pkg/mcp"
 	"agent/pkg/tool"
 	"context"
 	"encoding/json"
 	"fmt"
 
-	"agent/pkg/mcp"
-
-	"github.com/anthropics/anthropic-sdk-go"
+	anthropic "github.com/anthropics/anthropic-sdk-go"
 )
 
 type Agent struct {
-	client         *anthropic.Client
+	provider       Provider
 	getUserMessage func() (string, bool)
 	tools          []tool.ToolDefinition
 	mcpManager     *mcp.Manager
 }
 
-func NewAgent(client *anthropic.Client, getUserMessage func() (string, bool), tools []tool.ToolDefinition, mcpManager *mcp.Manager) *Agent {
+func NewAgent(provider Provider, getUserMessage func() (string, bool), tools []tool.ToolDefinition, mcpManager *mcp.Manager) *Agent {
 	return &Agent{
-		client:         client,
+		provider:       provider,
 		getUserMessage: getUserMessage,
 		tools:          tools,
 		mcpManager:     mcpManager,
@@ -28,7 +27,7 @@ func NewAgent(client *anthropic.Client, getUserMessage func() (string, bool), to
 }
 
 func (a *Agent) Run(ctx context.Context) error {
-	conversation := []anthropic.MessageParam{}
+	conversation := []MessageParam{}
 
 	fmt.Println("\nChat with Claude (use 'ctrl-c' to quit)")
 
@@ -79,37 +78,8 @@ func (a *Agent) Run(ctx context.Context) error {
 	return nil
 }
 
-func (a *Agent) runInference(ctx context.Context, conversation []anthropic.MessageParam) (*anthropic.Message, error) {
-	anthropicTools := []anthropic.ToolUnionParam{}
-	for _, tool := range a.tools {
-		anthropicTools = append(anthropicTools, anthropic.ToolUnionParam{
-			OfTool: &anthropic.ToolParam{
-				Name:        tool.Name,
-				Description: anthropic.String(tool.Description),
-				InputSchema: tool.InputSchema,
-			},
-		})
-	}
-	for _, tool := range a.mcpManager.Tools() {
-		anthropicTools = append(anthropicTools, anthropic.ToolUnionParam{
-			OfTool: &anthropic.ToolParam{
-				Name:        tool.Name,
-				Description: anthropic.String(tool.Description),
-				InputSchema: anthropic.ToolInputSchemaParam{
-					Type:       "object",
-					Properties: tool.InputSchema.Properties,
-				},
-			},
-		})
-	}
-
-	message, err := a.client.Messages.New(ctx, anthropic.MessageNewParams{
-		Model:     anthropic.ModelClaude3_7SonnetLatest,
-		MaxTokens: int64(1024),
-		Messages:  conversation,
-		Tools:     anthropicTools,
-	})
-	return message, err
+func (a *Agent) runInference(ctx context.Context, conversation []MessageParam) (Message, error) {
+	return a.provider.Chat(ctx, conversation)
 }
 
 func (a *Agent) isLocalTool(name string) bool {

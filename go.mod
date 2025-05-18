@@ -6,6 +6,7 @@ require (
 	github.com/anthropics/anthropic-sdk-go v0.2.0-beta.3
 	github.com/invopop/jsonschema v0.13.0
 	github.com/mark3labs/mcp-go v0.23.1
+	github.com/ollama/ollama v0.7.0
 )
 
 require (

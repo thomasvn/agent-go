@@ -11,11 +11,13 @@ import (
 	"agent/pkg/mcp"
 	"agent/pkg/tool"
 
-	"github.com/anthropics/anthropic-sdk-go"
+	anthropic "github.com/anthropics/anthropic-sdk-go"
+	"github.com/ollama/ollama/api"
 )
 
 func main() {
 	configPath := flag.String("config", "config.json", "path to MCP config file")
+	providerFlag := flag.String("provider", "anthropic", "LLM provider: anthropic|ollama")
 	flag.Parse()
 
 	mcpManager, err := mcp.NewManager(*configPath)
@@ -29,14 +31,50 @@ func main() {
 		return
 	}
 
-	client := anthropic.NewClient()
 	tools := []tool.ToolDefinition{
 		// tool.ReadFileDefinition,
 		// tool.ListFilesDefinition,
 		// tool.EditFileDefinition,
 	}
 
-	agent := agent.NewAgent(&client, getUserMessage, tools, mcpManager)
+	// Build Anthropic tool schemas for tools and MCP-defined tools.
+	anthropicTools := []anthropic.ToolUnionParam{}
+	for _, t := range tools {
+		anthropicTools = append(anthropicTools, anthropic.ToolUnionParam{OfTool: &anthropic.ToolParam{
+			Name:        t.Name,
+			Description: anthropic.String(t.Description),
+			InputSchema: t.InputSchema,
+		}})
+	}
+	for _, t := range mcpManager.Tools() {
+		anthropicTools = append(anthropicTools, anthropic.ToolUnionParam{OfTool: &anthropic.ToolParam{
+			Name:        t.Name,
+			Description: anthropic.String(t.Description),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				Type:       "object",
+				Properties: t.InputSchema.Properties,
+			},
+		}})
+	}
+
+	var llmProvider agent.Provider
+	switch *providerFlag {
+	case "anthropic":
+		anthClient := anthropic.NewClient()
+		llmProvider = agent.NewAnthropicProvider(anthClient, anthropic.MessageNewParams{
+			Model:     anthropic.ModelClaude3_7SonnetLatest,
+			MaxTokens: 1024,
+			Tools:     anthropicTools,
+		})
+	case "ollama":
+		olaClient := api.NewClient(nil)
+		llmProvider = agent.NewOllamaProvider(olaClient, "llama2")
+	default:
+		fmt.Fprintf(os.Stderr, "unknown provider %q; must be anthropic or ollama\n", *providerFlag)
+		os.Exit(1)
+	}
+
+	agent := agent.NewAgent(llmProvider, getUserMessage, tools, mcpManager)
 	err = agent.Run(context.TODO())
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
